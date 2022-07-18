@@ -40,10 +40,10 @@ CREDITS go to j1987, MrAuralization, soundscalpel.com and Quistard of freesound.
 
 if (not isServer) exitWith {};
 
-params 
+params
 [
 	"_firing_position", // [x,y,z]
-	"_type", 
+	"_type",
 	"_color" // random, green, red, blue, white
 ];
 
@@ -52,7 +52,7 @@ private _explosion_power = random [ 30, 50, 70 ]; // 30-70 seems reasonable
 private _glitter_count = round random [20, 30, 40 ]; // 30 is poor, 50 is ok, 100 might be overkill
 private _initial_velocity = [ -5 + random 10, -5 + random 10, random [ 270, 300, 330 ] ]; // firing not perfect but in a slight angle
 
-private _colorArray = 
+private _colorArray =
 [
 	[ random [ 0.378,  0.42, 0.462], random [ 0.729,  0.81, 0.891 ], random [ 0.09,  0.1, 0.11 ] ], //green
 	[ random [ 0.72,  0.8, 0.88], random [ 0.09,  0.1, 0.11 ], random [ 0.315,  0.35, 0.385 ] ], // red
@@ -80,10 +80,10 @@ private _color = [] call
 
 	//white is default
 	_colorArray # GRAD_WHITE
-}; 
+};
 
 //launch sounds
-private _launchSound = selectRandom 
+private _launchSound = selectRandom
 [
 	"launch1",
 	"launch2",
@@ -95,7 +95,7 @@ private _launchSound = selectRandom
 ];
 
 //whistling
-private _whistlingSound = selectRandom 
+private _whistlingSound = selectRandom
 [
 	"whistling1",
 	"whistling2",
@@ -119,7 +119,7 @@ private _bangSound = selectRandom
 ];
 
 //fizzes
-private _singleFizz = 
+private _singleFizz =
 [
 	"fizz_single_type1_1",
 	"fizz_single_type1_2",
@@ -132,7 +132,7 @@ private _singleFizz =
 ];
 
 //group fizzes
-private _groupFizz = 
+private _groupFizz =
 [
 	"fizz_group1",
 	"fizz_group2",
@@ -150,7 +150,7 @@ private _types =
 _type = if not ( _type in _types ) then { selectRandom _types } else { _type };
 
 
-if ( _type isEqualTo _types # GRAD_NORMAL ) then 
+if ( _type isEqualTo _types # GRAD_NORMAL ) then
 {
 	_glitter_count = _glitter_count * 2;
 	_explosion_power = _explosion_power / 2;
@@ -159,11 +159,11 @@ if ( _type isEqualTo _types # GRAD_NORMAL ) then
 // prepare random explosion values for fragments
 
 for "_i" from 1 to _glitter_count do
-{ 
+{
 	_dummy = _explosion_fragments_array pushBack
 	[ ( -_explosion_power + 2 * random _explosion_power ) / 2, ( -_explosion_power + 2 * random _explosion_power ) / 2, ( -_explosion_power + 2 * random _explosion_power ) / 2 ];
 
-	if (_i < _glitter_count/3) then 
+	if (_i < _glitter_count/3) then
 	{
 		_dummy = _explosion_subfragments_array pushBack
 		[ ( -_explosion_power + random _explosion_power ) / 16, ( -_explosion_power + random _explosion_power ) / 16, ( -_explosion_power + random _explosion_power ) / 16] ;
@@ -175,12 +175,12 @@ if (_type isEqualTo _types # GRAD_RAIN) then
 {
 	_color = [1,0.9,0.6];
 
-	for "_i" from 1 to _glitter_count do 
-	{ 
+	for "_i" from 1 to _glitter_count do
+	{
 		_dummy = _explosion_fragments_array pushBack
 		[ ( -_explosion_power + 2 * random _explosion_power ) / 2, ( -_explosion_power + 2 * random _explosion_power ) / 2, random _explosion_power ];
 
-		if (_i < _glitter_count/3) then 
+		if (_i < _glitter_count/3) then
 		{
 			_dummy = _explosion_subfragments_array pushBack
 			[ ( -_explosion_power + (random _explosion_power) ) / 16, ( -_explosion_power + (random _explosion_power) ) / 16, (random _explosion_power) / 16 ];
@@ -189,9 +189,8 @@ if (_type isEqualTo _types # GRAD_RAIN) then
 };
 
 // send all precalculated stuff to clients
-private _target = if (isDedicated) then {-2} else {0};
 
-	[ [
+	[
 	_firing_position,
 	_type,
 	_initial_velocity,
@@ -209,4 +208,4 @@ private _target = if (isDedicated) then {-2} else {0};
 	_singleFizz,
 	_groupFizz,
 	_randomSleepShort
-	], GRAD_fnc_Fireworks  ] remoteExec ["spawn", _target];
+	] remoteExec ["GRAD_fnc_Fireworks", [0,-2] select isDedicated];
