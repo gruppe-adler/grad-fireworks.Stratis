@@ -1,37 +1,29 @@
-GRAD_Fireworks = {
+	params
+	[
+		"_firing_position", // where rocket starts
+		"_type1",
+		"_initial_velocity", // rocket initial speed
+		"_explosion_power", // how big the explosion radius/force
+		"_glitter_count", // how many fragments 
+		"_color", // color
+		"_explosion_fragments_array",
+		"_explosion_subfragments_array",
+		"_randomSleep",
+		"_randomSleepLong",
+		"_randomLaunch",
+		"_launchSound",
+		"_whistlingSound",
+		"_bangSound",
+		"_singleFizz",
+		"_groupFizz",
+		"_randomSleepShort"
+	];
 
-	if (isDedicated) exitWith {};
-    
-	_firing_position = _this select 0; // where rocket starts
-	_type1 = _this select 1;
-	_initial_velocity = _this select 2; // rocket initial speed
-	_explosion_power = _this select 3; // how big the explosion radius/force
-	_glitter_count = _this select 4; // how many fragments 
-	//_color = [1,1,1];
-	_color = _this select 5; // color
-	_explosion_fragments_array = (_this select 6);
-	_explosion_subfragments_array = (_this select 7);
-
-	_randomSleep = _this select 8;
-	_randomSleepLong = _this select 9;
-	_randomLaunch = _this select 10;
-	_launchSound = _this select 11;
-	_whistlingSound = _this select 12;
-	_bangSound = _this select 13;
-	_singleFizz = _this select 14;
-	_groupFizz = _this select 15;
-	_randomSleepShort = _this select 16;
-
-
-	//hintSilent format ["%1,%2,%3,%4,%5,%6,%7",_firing_position,_type1,_initial_velocity,_explosion_power,_glitter_count,_color,_explosion_fragments_array,_explosion_subfragments_array];
-
-	//hintSilent format ["%1",_explosion_fragments_array];	
-
-	_nul1 ="CMflare_Chaff_Ammo" createVehicleLocal [_firing_position select 0,_firing_position select 1, 0]; 
-	_nul1 setVelocity _initial_velocity; 
+	private _chaff ="CMflare_Chaff_Ammo" createVehicleLocal _firing_position; 
+	_chaff setVelocity _initial_velocity; 
 
 
-	_light1 = "#lightpoint" createVehicleLocal [0,0,0];
+	private _light1 = "#lightpoint" createVehicleLocal [0,0,0];
 	_light1 setLightBrightness 0.1;
 	_light1 setLightColor [1,0.3,0];
 	_light1 setLightUseFlare true;
@@ -39,22 +31,23 @@ GRAD_Fireworks = {
 	_light1 setLightFlareSize 5;
 	
 
-	_light2 = "#lightpoint" createVehicleLocal [0,0,0];
+	private _light2 = "#lightpoint" createVehicleLocal [0,0,0];
 	_light2 setLightBrightness 0.08;
 	_light2 setLightColor [1,0.8,0];
 	_light2 setLightUseFlare true;
 	_light2 setLightFlareMaxDistance 1000;
 	_light2 setLightFlareSize 4;
 	sleep 0.01;
-	_light1 lightAttachObject  [_nul1,[0,0,0]];
-	_light2 lightAttachObject  [_nul1,[0,0,0]];
-	
 
-	_nul1 say3D _launchsound;
+	_light1 lightAttachObject  [ _chaff, [0,0,0] ];
+	_light2 lightAttachObject  [ _chaff, [0,0,0] ];
+
+	_chaff say3D [ _launchSound, random [ 450, 500, 550 ] ];
+
 	sleep 1;
 
 	if (_type1 == "fizzer") then {
-		_nul1 say3D _whistlingSound;
+		_chaff say3D [ _whistlingSound, random [ 1800, 2000, 2200 ] ];
 	};
 
 	sleep (2 + _randomSleepShort);
@@ -62,201 +55,207 @@ GRAD_Fireworks = {
 	deleteVehicle _light1;
 	deleteVehicle _light2;
 
-	_nul2 ="FxExploArmor3" createVehicleLocal (getPos _nul1);
-	//hideObject _nul2;
+	private _nul2 ="FxExploArmor3" createVehicleLocal (getPos _chaff);
+
 	sleep 0.10;
-	_nul2 say3D _bangSound;
+	
+	_nul2 say3D [ _bangSound, random [ 2700, 3000, 3300 ] ];
 
+	//solving conditions out of loops
+	private _isTypeArray = [ _type1 in [ "normal", "fizzer"], _type1 isEqualTo "normal",  _type1 isEqualTo "fizzer", _type1 isEqualTo "rain"];
 
-
-		for [{_i=0},{_i < count _explosion_fragments_array},{_i=_i+1}] do 
+	for "_i" from 0 to -1 + count _explosion_fragments_array do 
+	{
+		[
+			_chaff,
+			_isTypeArray,
+			_explosion_fragments_array,
+			_explosion_subfragments_array,
+			_color,
+			_glitter_count,
+			_i,
+			_randomSleep,
+			_randomSleepLong,
+			_singleFizz,
+			_groupFizz,
+			_bangSound
+		] spawn 
 		{
-
-			[_nul1,_type1,_explosion_fragments_array,_explosion_subfragments_array,_color,_glitter_count,_i,_randomSleep,_randomSleepLong,_singleFizz,_groupFizz,_bangSound] spawn {
-				_rocket = _this select 0;
-				_type2 = _this select 1;
-				_fragments = _this select 2;
-				_subfragments = _this select 3;
-				_color2 = _this select 4;
-				_glitter_count2 = _this select 5;
-				_selector = _this select 6;
-				_randomSleep2 = _this select 7;
-				_randomSleepLong2 = _this select 8;
-				_singleFizz1 = _this select 9;
-				_groupFizz1 = _this select 10;
-				_bangSound1 = _this select 11;
-
-
-				_nul2 ="CMflare_Chaff_Ammo" createVehicleLocal (getPos _rocket); 
-				_smoke ="SmokeLauncherAmmo" createVehicleLocal (getPos _rocket);	
+			params
+			[
+				"_rocket",
+				"_isTypeArray",
+				"_fragments",
+				"_subfragments",
+				"_color2",
+				"_glitter_count2",
+				"_selector",
+				"_randomSleep2",
+				"_randomSleepLong2",
+				"_singleFizz1",
+				"_groupFizz1",
+				"_bangSound1"
+			];
+				private _nul2 ="CMflare_Chaff_Ammo" createVehicleLocal (getPos _rocket); 
+//				_smoke ="SmokeLauncherAmmo" createVehicleLocal (getPos _rocket);	
 				
-				_nul2 setVelocity (_fragments select _selector);
+			_nul2 setVelocity (_fragments select _selector);
 
-				_light2 = "#lightpoint" createVehicleLocal [0,0,0];
-				_light2 setLightBrightness 1.0;
-				if (_type2 == "normal" || _type2 == "fizzer") then {
-					_light2 setLightAmbient [1,0.9,0.6];
-				} else {
-					_light2 setLightAmbient _color2;
-				};
-				
-				_light2 setLightColor _color2;
-				_light2 lightAttachObject  [_nul2,[0,0,0]];
+			private _light2 = "#lightpoint" createVehicleLocal [0,0,0];
+			_light2 setLightBrightness 1.0;
 
-				_light2 setLightUseFlare true;
-				_light2 setLightFlareMaxDistance 1000;
-				_light2 setLightFlareSize 3;
+			if ( _isTypeArray # 0 ) then { _light2 setLightAmbient [1,0.9,0.6]; } else { _light2 setLightAmbient _color2; };
 				
-				//_light2 attachTo  [_nul2,[0,0,0]];
+			_light2 setLightColor _color2;
+			_light2 lightAttachObject  [_nul2,[0,0,0]];
 
-				if (_type2 == "normal") then {
-					sleep (3 + (random 1));
-					deleteVehicle _light2;
-				};
+			_light2 setLightUseFlare true;
+			_light2 setLightFlareMaxDistance 1000;
+			_light2 setLightFlareSize 3;
 				
-				if (_type2 == "fizzer")  then {
-					sleep 1.0;
-					deleteVehicle _light2;
+			_light2 attachTo  [_nul2,[0,0,0]];
+
+			if ( _isTypeArray # 1 ) then 
+			{
+				sleep (3 + (random 1));
+				deleteVehicle _light2;
+			};
+
+			sleep 1.0;
+			deleteVehicle _light2;
 					
-					_nul2 say3D _bangSound1;
-				
-					for [{_j=0},{_j < (count _subfragments)},{_j=_j+1}] do 
+			_nul2 say3D [ _bangSound1, random [ 2700, 3000, 3300 ] ];
+
+			private _rocketPos = position _nul2;
+			deleteVehicle _nul2;				
+
+			if (_isTypeArray # 2)  then 
+			{
+				for "_j" from 0 to -1 + count _subfragments do 
+				{		
+					[
+						_rocketPos,
+						_isTypeArray,
+						_subfragments,
+						_color2,
+						_j,
+						_randomSleep2,
+						_randomSleepLong2,
+						_singleFizz1,
+						_groupFizz1,
+						_bangSound1
+					] spawn 
 					{
-					
-						[_nul2,_type2,_subfragments,_color2,_j,_randomSleep2,_randomSleepLong2,_singleFizz1,_groupFizz1,_bangSound1] spawn {
-							_rocket2 = _this select 0;
-							_type3 = _this select 1;
-							_subfragments2 = _this select 2;
-							_color3 = _this select 3;
-							_selector2 = _this select 4;
-							_randomSleep3 = _this select 5;
-							_randomSleepLong3 = _this select 6;
-							_singleFizz2 = _this select 7;
-							_groupFizz2 = _this select 8;
-							_bangSound2 = _this select 9;
+						params
+						[
+							"_rocketPos",
+							"_isTypeArray",
+							"_subfragments2",
+							"_color3",
+							"_selector2",
+							"_randomSleep3",
+							"_randomSleepLong3",
+							"_singleFizz2",
+							"_groupFizz2",
+							"_bangSound2"
+						];
 
+						private _posz = _rocketPos select 2;
+
+						_rocketPos = _rocketPos getPos [ random 10, random 360 ];
+						_rocketPos set [2, _posz + (random 20) - 10 ];
+
+						private _nul3 ="F_20mm_White" createVehicleLocal _rocketPos;
+
+						_nul3 setVelocity (_subfragments2 select _selector2);
+
+						private _light3 = "#lightpoint" createVehicleLocal [0,0,0];
+						_light3 setLightBrightness 2;
+
+						if (_isTypeArray # 0) then { _light3 setLightAmbient [1,0.9,0.6]; } else 
+							{ _light3 setLightAmbient _color3; };
+
+						_light3 setLightColor _color3;
+						_light3 lightAttachObject  [_nul3,[0,0,0]];
+
+						_light3 setLightUseFlare true;
+						_light3 setLightFlareMaxDistance 1000;
+						_light3 setLightFlareSize 1;
+
+						sleep (random 1);
+
+						_nul3 say3D [ ( selectRandom _singleFizz2 ), random [ 1800, 2000, 2200 ] ];
 							
-							_posx = (getPos _rocket2) select 0;
-							_posy = (getPos _rocket2) select 1;
-							_posz = (getPos _rocket2) select 2;
+						sleep (2 - (random 1.5));
 
-							
-							deleteVehicle _rocket2;
-							
-							
-
-							
-							_nul3 ="F_20mm_White" createVehicleLocal [_posx + ((random 20)-10),_posy+ ((random 20)-10),_posz+ ((random 20)-10)];
-
-
-							_nul3 setVelocity (_subfragments2 select _selector2);
-
-
-
-							_light3 = "#lightpoint" createVehicleLocal [0,0,0];
-							_light3 setLightBrightness 2;
-								if (_type3 == "normal" || _type3 == "fizzer") then {
-								_light3 setLightAmbient [1,0.9,0.6];
-								} else {
-								_light3 setLightAmbient _color3;
-							};
-							_light3 setLightColor _color3;
-							_light3 lightAttachObject  [_nul3,[0,0,0]];
-
-							_light3 setLightUseFlare true;
-							_light3 setLightFlareMaxDistance 1000;
-							_light3 setLightFlareSize 1;
-
-							sleep (random 1);
-							_nul3 say3D (_singleFizz2 call BIS_fnc_selectRandom);
-
-							sleep (2 - (random 1.5));
-							
-
-							
-
-							deleteVehicle _light3;
-							deleteVehicle _nul3;
-							
-						
-						};
+						deleteVehicle _light3;
+						deleteVehicle _nul3;
 					};
 				};
+			};
 
-				if (_type2 == "rain")  then {
-					sleep 1.0;
-					
-					
-					_nul2 say3D _bangSound1;
-				
-					[_nul2,_type2,_fragments,_color2,_selector,_randomSleep2,_randomSleepLong2,_singleFizz1,_groupFizz1,_bangSound1] spawn {
-							_rocket2 = _this select 0;
-							_type2 = _this select 1;
-							_subfragments2 = _this select 2;
-							_color3 = _this select 3;
-							_selector2 = _this select 4;
-							_randomSleep3 = _this select 5;
-							_randomSleepLong3 = _this select 6;
-							_singleFizz2 = _this select 7;
-							_groupFizz2 = _this select 8;
-							_bangSound2 = _this select 9;
+			if (_isTypeArray # 3)  then 
+			{
+				[
+					_rocketPos,
+					_isTypeArray,_fragments,
+					_color2,_selector,
+					_randomSleep2,
+					_randomSleepLong2,
+					_singleFizz1,
+					_groupFizz1,
+					_bangSound1
+				] spawn 
+				{
+					params
+					[
+						"_rocketPos",
+						"_isTypeArray",
+						"_subfragments2",
+						"_color3",
+						"_selector2",
+						"_randomSleep3",
+						"_randomSleepLong3",
+						"_singleFizz2",
+						"_groupFizz2",
+						"_bangSound2"
+					];
 
+					private _nul3 ="FxWindPollen1" createVehicleLocal _rocketPos;
 							
-							_posx = (getPos _rocket2) select 0;
-							_posy = (getPos _rocket2) select 1;
-							_posz = (getPos _rocket2) select 2;
+					_nul3 setVelocity (_subfragments2 select _selector2);
 
-							
-							deleteVehicle _rocket2;
-							
-							
-
-							_nul3 ="FxWindPollen1" createVehicleLocal [getPos _rocket2 select 0,getPos _rocket2 select 1,getPos _rocket2 select 2];
-							
-							_nul3 setVelocity (_subfragments2 select _selector2);
-
-
-
-							_light3 = "#lightpoint" createVehicleLocal [0,0,0];
-							_light3 setLightBrightness 2;
-							if (_type2 == "normal" || _type2 == "fizzer") then {
-								_light3 setLightAmbient [1,0.9,0.6];
-								} else {
-								_light3 setLightAmbient _color3;
-							};
-							_light3 setLightColor _color3;
-							_light3 lightAttachObject  [_nul3,[0,0,0]];
-
-							_light3 setLightUseFlare true;
-							_light3 setLightFlareMaxDistance 1000;
-							_light3 setLightFlareSize 1;
-
-							sleep (random 1);
-							_nul3 say3D (_singleFizz2 call BIS_fnc_selectRandom);
-
-							sleep (2 - (random 1.5));
-							
-
-							
-
-							deleteVehicle _light3;
-							deleteVehicle _nul3;
-							
+					private _light3 = "#lightpoint" createVehicleLocal [0,0,0];
+					_light3 setLightBrightness 2;
 						
-						};
-						sleep 1;
-						deleteVehicle _light2;
-					
+					if ( _isTypeArray # 0 ) then { _light3 setLightAmbient [1,0.9,0.6]; } else 
+						{ _light3 setLightAmbient _color3; };
+
+					_light3 setLightColor _color3;
+					_light3 lightAttachObject  [_nul3,[0,0,0]];
+
+					_light3 setLightUseFlare true;
+					_light3 setLightFlareMaxDistance 1000;
+					_light3 setLightFlareSize 1;
+
+					sleep (random 1);
+
+					_nul3 say3D [ ( selectRandom _singleFizz2 ), random [ 1800, 2000, 2200 ] ];
+
+					sleep (2 - (random 1.5));
+
+					deleteVehicle _light3;
+					deleteVehicle _nul3;
 				};
 
-
-
+				sleep 1;
+				deleteVehicle _light2;
 			};
 		};
+	};
 
-		sleep 1;
+	sleep 1;
 
-		_nul2 say3D (_groupFizz call BIS_fnc_selectRandom);
-		sleep 2;
-		deleteVehicle _nul2;
-};  
+	_nul2 say3D [ (selectRandom _groupFizz ), random [ 1800, 2000, 2200 ] ];
+	sleep 2;
+	deleteVehicle _nul2;

@@ -29,42 +29,62 @@ CREDITS go to j1987, MrAuralization, soundscalpel.com and Quistard of freesound.
 
 */
 
-if (isServer || isDedicated) then {
+#define GRAD_GREEN			0
+#define GRAD_RED			1
+#define GRAD_BLUE			2
+#define GRAD_WHITE			3
 
-	_firing_position = _this select 0; // [x,y,z]
-	_type = _this select 1;
-	_color = _this select 2; // random, green, red, blue, white
+#define GRAD_FIZZER			0
+#define GRAD_NORMAL			1
+#define GRAD_RAIN			2
+
+if (not isServer) exitWith {};
+
+params 
+[
+	"_firing_position", // [x,y,z]
+	"_type", 
+	"_color" // random, green, red, blue, white
+];
+
+private "_dummy";
+private _explosion_power = random [ 30, 50, 70 ]; // 30-70 seems reasonable
+private _glitter_count = round random [20, 30, 40 ]; // 30 is poor, 50 is ok, 100 might be overkill
+private _initial_velocity = [ -5 + random 10, -5 + random 10, random [ 270, 300, 330 ] ]; // firing not perfect but in a slight angle
+
+private _colorArray = 
+[
+	[ random [ 0.378,  0.42, 0.462], random [ 0.729,  0.81, 0.891 ], random [ 0.09,  0.1, 0.11 ] ], //green
+	[ random [ 0.72,  0.8, 0.88], random [ 0.09,  0.1, 0.11 ], random [ 0.315,  0.35, 0.385 ] ], // red
+	[ random [ 0.18,  0.2, 0.22 ], random [ 0.657,  0.73, 0.803 ], random [ 0.765,  0.85, 0.935 ]], // blue
+	[ random [ 0.9,  0.99, 1 ], random [ 0.9,  0.99, 1 ], random [ 0.9,  0.99, 1 ] ] // white
+];
 
 
-	_explosion_power = 50; // 30-70 seems reasonable
-	_glitter_count = 20; // 30 is poor, 50 is ok, 100 might be overkill
-	_initial_velocity = [(random 10) -5,(random 10)-5, 300]; // firing not perfect but in a slight angle
-
-	_colorArray = [[0.42,0.81,0.1],[0.8,0.1,0.35],[0.2,0.73,0.85],[1,1,1]];
+private _explosion_fragments_array = [];
+private _explosion_subfragments_array = [];
 
 
-	_explosion_fragments_array = [];
-	_explosion_subfragments_array = [];
+private _randomLaunch = (random 4.5) - 2.3;
 
+private _randomSleep = (random 0.5) - 0.25;
+private _randomSleepLong = (random 8) - 4;
+private _randomSleepShort = (random 0.1) - 0.05;
 
-	_randomLaunch = (random 4.5) - 2.3;
+private _color = [] call
+{
+	if (_color isEqualTo "random") exitWith { selectRandom _colorArray };
+	if (_color isEqualTo "green") exitWith { _colorArray # GRAD_GREEN };
+	if (_color isEqualTo "red") exitWith {  _colorArray # GRAD_RED };
+	if (_color isEqualTo "blue") exitWith { _colorArray # GRAD_BLUE };
 
-	_randomSleep = (random 0.5) - 0.25;
-	_randomSleepLong = (random 8) - 4;
-	_randomSleepShort = (random 0.1) - 0.05;
+	//white is default
+	_colorArray # GRAD_WHITE
+}; 
 
-	// take color parameter and convert into color code
-	switch (_color) do {
-	case "random": 	{_color = _colorArray call BIS_fnc_selectRandom};
-	case "green": 	{_color = [0.42,0.81,0.1]};
-	case "red": 	{_color = [0.8,0.1,0.35]};
-	case "blue": 	{_color = [0.2,0.73,0.85]};
-	case "white": 	{_color = [1,1,1]};
-	default 		{_color = [1,1,1]};
-	}; 
-
-	//launch sounds
-	_launchSound = [
+//launch sounds
+private _launchSound = selectRandom 
+[
 	"launch1",
 	"launch2",
 	"launch3",
@@ -72,18 +92,20 @@ if (isServer || isDedicated) then {
 	"launch5",
 	"launch6",
 	"launch7"
-	] call BIS_fnc_selectRandom;
+];
 
-	//whistling
-	_whistlingSound = [
+//whistling
+private _whistlingSound = selectRandom 
+[
 	"whistling1",
 	"whistling2",
 	"whistling3",
 	"whistling4"
-	] call BIS_fnc_selectRandom;
+];
 
-	//bangs
-	_bangSound = [
+//bangs
+private _bangSound = selectRandom
+[
 	"bang01",
 	"bang02",
 	"bang03",
@@ -94,10 +116,11 @@ if (isServer || isDedicated) then {
 	"bang08",
 	"bang10",
 	"bang11"
-	] call BIS_fnc_selectRandom;
+];
 
-	//fizzes
-	_singleFizz = [
+//fizzes
+private _singleFizz = 
+[
 	"fizz_single_type1_1",
 	"fizz_single_type1_2",
 	"fizz_single_type1_3",
@@ -106,80 +129,69 @@ if (isServer || isDedicated) then {
 	"fizz_single_type2_2",
 	"fizz_single_type2_3",
 	"fizz_single_type2_4"
-	];
+];
 
-	//group fizzes
-	_groupFizz = [
+//group fizzes
+private _groupFizz = 
+[
 	"fizz_group1",
 	"fizz_group2",
 	"fizz_group3",
 	"fizz_group4"
-	];
+];
 
-	switch (_type) do {
-	case "random": 	{_type = [
-							"fizzer",
-							"normal",
-							"rain"
-						] call BIS_fnc_selectRandom;};
-	case "normal": 	{_type = "normal";};
-	case "fizzer": 	{_type = "fizzer";};
-	case "rain": 	{_type = "rain";};
-	default 		{_type = [
-							"fizzer",
-							"normal",
-							"rain"
-						] call BIS_fnc_selectRandom;};
-	}; 
+private _types =
+[
+	"fizzer",
+	"normal",
+	"rain"
+];
 
-	if (_type == "normal") then {
-		_glitter_count = _glitter_count*2;
-		_explosion_power = _explosion_power/2;
-		
+_type = if not ( _type in _types ) then { selectRandom _types } else { _type };
+
+
+if ( _type isEqualTo _types # GRAD_NORMAL ) then 
+{
+	_glitter_count = _glitter_count * 2;
+	_explosion_power = _explosion_power / 2;
+};
+
+// prepare random explosion values for fragments
+
+for "_i" from 1 to _glitter_count do
+{ 
+	_dummy = _explosion_fragments_array pushBack
+	[ ( -_explosion_power + 2 * random _explosion_power ) / 2, ( -_explosion_power + 2 * random _explosion_power ) / 2, ( -_explosion_power + 2 * random _explosion_power ) / 2 ];
+
+	if (_i < _glitter_count/3) then 
+	{
+		_dummy = _explosion_subfragments_array pushBack
+		[ ( -_explosion_power + random _explosion_power ) / 16, ( -_explosion_power + random _explosion_power ) / 16, ( -_explosion_power + random _explosion_power ) / 16] ;
 	};
+};
 
-	// prepare random explosion values for fragments
-	for [{_i=0},{_i < _glitter_count},{_i=_i+1}] do { 
-		_rand_expl_power1 = ((random _explosion_power)*2) - _explosion_power;
-		_rand_expl_power2 = ((random _explosion_power)*2) - _explosion_power;
-		_rand_expl_power3 = ((random _explosion_power)*2) - _explosion_power;
-		_explosion_fragments_array = _explosion_fragments_array + 
-		[[(_rand_expl_power1) -_rand_expl_power1/2,(_rand_expl_power2) -_rand_expl_power2/2, (_rand_expl_power3) -_rand_expl_power3/2]];
 
-		if (_i < _glitter_count/3) then {
-		_rand_subexpl_power1 = ((random _explosion_power)/2) - _explosion_power/2;
-		_rand_subexpl_power2 = ((random _explosion_power)/2) - _explosion_power/2;
-		_rand_subexpl_power3 = ((random _explosion_power)/2) - _explosion_power/2;
-		_explosion_subfragments_array = _explosion_subfragments_array + 
-		[[(_rand_subexpl_power1/4) -_rand_subexpl_power1/8,(_rand_subexpl_power2/4) -_rand_subexpl_power2/8, (_rand_subexpl_power3/4) -_rand_subexpl_power3/8]];
+if (_type isEqualTo _types # GRAD_RAIN) then
+{
+	_color = [1,0.9,0.6];
+
+	for "_i" from 1 to _glitter_count do 
+	{ 
+		_dummy = _explosion_fragments_array pushBack
+		[ ( -_explosion_power + 2 * random _explosion_power ) / 2, ( -_explosion_power + 2 * random _explosion_power ) / 2, random _explosion_power ];
+
+		if (_i < _glitter_count/3) then 
+		{
+			_dummy = _explosion_subfragments_array pushBack
+			[ ( -_explosion_power + (random _explosion_power) ) / 16, ( -_explosion_power + (random _explosion_power) ) / 16, (random _explosion_power) / 16 ];
 		};
 	};
+};
 
+// send all precalculated stuff to clients
+private _target = if (isDedicated) then {-2} else {0};
 
-	if (_type == "rain") then {
-		_color = [1,0.9,0.6];
-
-			for [{_i=0},{_i < _glitter_count},{_i=_i+1}] do { 
-			_rand_expl_power1 = ((random _explosion_power)*2) - _explosion_power;
-			_rand_expl_power2 = ((random _explosion_power)*2) - _explosion_power;
-			_rand_expl_power3 = ((random _explosion_power)*2);
-			_explosion_fragments_array = _explosion_fragments_array + 
-			[[(_rand_expl_power1) -_rand_expl_power1/2,(_rand_expl_power2) -_rand_expl_power2/2, (_rand_expl_power3) -_rand_expl_power3/2]];
-
-			if (_i < _glitter_count/3) then {
-				_rand_subexpl_power1 = ((random _explosion_power)/2) - _explosion_power/2;
-				_rand_subexpl_power2 = ((random _explosion_power)/2) - _explosion_power/2;
-				_rand_subexpl_power3 = ((random _explosion_power)/2);
-				_explosion_subfragments_array = _explosion_subfragments_array + 
-				[[(_rand_subexpl_power1/4) -_rand_subexpl_power1/8,(_rand_subexpl_power2/4) -_rand_subexpl_power2/8, (_rand_subexpl_power3/4) -_rand_subexpl_power3/8]];
-				};
-			};
-	
-	};
-
-
-	// send all precalculated stuff to clients
-	[[
+	[ [
 	_firing_position,
 	_type,
 	_initial_velocity,
@@ -197,5 +209,4 @@ if (isServer || isDedicated) then {
 	_singleFizz,
 	_groupFizz,
 	_randomSleepShort
-	], "GRAD_Fireworks"] spawn BIS_fnc_MP;
-};
+	], GRAD_fnc_Fireworks  ] remoteExec ["spawn", _target];
