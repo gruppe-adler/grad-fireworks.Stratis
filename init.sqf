@@ -11,7 +11,7 @@ if (isServer) then
 // only needed by machines with screen output
 if (hasInterface) then
 {
-	GRAD_fnc_callFireworksClientClient = compile preprocessFileLineNumbers "GRAD_fireworks\fireworksClient.sqf";
+	GRAD_fnc_callFireworksClient = compile preprocessFileLineNumbers "GRAD_fireworks\fireworksClient.sqf";
 };
 
 // EXPLANATION
