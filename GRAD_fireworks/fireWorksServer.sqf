@@ -7,12 +7,12 @@ Call Script on Server only!
 
 Example with Marker:
 if (isServer) then {
-	[[getMarkerPos "markername", 'normal','white'] ,"callFireworks",true,true] spawn BIS_fnc_MP;
+	[getMarkerPos "markername", 'normal','white'] remoteExec ['GRAD_fnc_callFireworksServer', 2];
 };
 
 Example with Object:
 if (isServer) then {
-	[[getPos objectname, 'random','red'] ,"callFireworks",true,true] spawn BIS_fnc_MP;
+	[getPos objectname, 'random','red'] remoteExec ['GRAD_fnc_callFireworksClient', [0,-2] select isDedicated];
 };
 
 
@@ -26,6 +26,8 @@ TYPE OF ROCKET - random, fizzer, normal, rain
 COLOR OF ROCKET - random, green, red, blue, white
 
 CREDITS go to j1987, MrAuralization, soundscalpel.com and Quistard of freesound.org
+
+Code improvements by sarogahtyp 2022 - thank you! 
 
 */
 
@@ -208,4 +210,4 @@ if (_type isEqualTo _types # GRAD_RAIN) then
 	_singleFizz,
 	_groupFizz,
 	_randomSleepShort
-	] remoteExec ["GRAD_fnc_Fireworks", [0,-2] select isDedicated];
+	] remoteExec ["GRAD_fnc_callFireworksClient", [0,-2] select isDedicated];

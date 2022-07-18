@@ -227,7 +227,7 @@ class Mission
 			repeating=1;
 			interruptable=1;
 			age="UNKNOWN";
-			expActiv="if (isServer) then { boat = selectRandom [boat1,boat2,boat3];  [getPos boat, 'fizzer','red'] remoteExec ['GRAD_fnc_callFireworks', 2];};";
+			expActiv="if (isServer) then { boat = selectRandom [boat1,boat2,boat3];  [getPos boat, 'fizzer','red'] remoteExec ['GRAD_fnc_callFireworksServer', 2];};";
 			class Effects
 			{
 			};
@@ -241,7 +241,7 @@ class Mission
 			repeating=1;
 			interruptable=1;
 			age="UNKNOWN";
-			expActiv="if (isServer) then { boat = selectRandom [boat1,boat2,boat3];  [getPos boat, 'random','random'] remoteExec ['GRAD_fnc_callFireworks', 2];};";
+			expActiv="if (isServer) then { boat = selectRandom [boat1,boat2,boat3];  [getPos boat, 'random','random'] remoteExec ['GRAD_fnc_callFireworksServer', 2];};";
 			class Effects
 			{
 			};
